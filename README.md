@@ -1,2 +1,2 @@
 # plugin.video.alltube
-Filmy , Seriale  Online    
+Filmy , Seriale  Online    ze strony alltube.tv
