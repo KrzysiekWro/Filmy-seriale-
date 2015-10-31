@@ -342,9 +342,13 @@ def VIDEOLINKS(url,name):
                           print media_url
                      elif "cda" in host:
                          media_url = CDA(url)
+<<<<<<< HEAD
                          media_url = media_url+'|referer=http://static.cda.pl/flowplayer/flash/flowplayer.commercial-3.2.18.swf'
                      elif "streamin" in host:
                           media_url = url.replace("video/","")             
+=======
+                         media_url = media_url+ '|Cookie="PHPSESSID=1&Referer=http://static.cda.pl/player5.9/player.swf'
+>>>>>>> origin/master
                      else:                  
                          media_url = urlresolver.resolve(url)
                  #print media_url
