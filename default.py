@@ -59,16 +59,22 @@ def CDA(url):
       videourl = "http://"+match[0]
       print videourl + ' videourl'
       return videourl
+    else :
+         return ""
     match = re.compile("file: 'http://(.+?)',").findall(r.text)
     if match:
        videourl = "http://"+match[0]
        print videourl+ ' videourl'
        return videourl
+    else :
+         return ""
     match = re.compile('data-urlhost="http://(.+?)"').findall(r.text)
     if match:
         videourl = "http://www."+match[0]
         print videourl+ ' videourl'
         return videourl
+    else :
+         return ""
 
 def addDir(name,url,mode,iconimage,letter,page):
          u = sys.argv[0] + "?url=" + urllib.quote_plus(url) + "&mode=" + str(mode) + "&name=" + urllib.quote_plus(name)  + "&letter=" +urllib.quote_plus(letter)+"&page=" + str(page)   
@@ -80,10 +86,9 @@ def addDir(name,url,mode,iconimage,letter,page):
 
      
 def CATEGORIES():
-        addDir('Ostatnio Dodane Filmy i Seriale','http://www.alltube.pl/',1,'','','')
         addDir('Filmy najnowsze','http://alltube.tv/filmy-online/strona[1]+',6,'','',1)
         addDir('Seriale najnowsze','http://alltube.tv/seriale-online/1',9,'','',1)
-        addDir('Kids','http://alltube.tv/filmy-online/kategoria[5]+',6,'','',1)
+        addDir('Kids','http://alltube.tv/filmy-online/kategoria[5]+strona[1]',2,'','',1)
         addDir('Szukaj filmu/serialu','http://alltube.tv/szukaj',3,'','','')
         addDir('Filmy wg rodzaju','http://alltube.tv/filmy-online/',5,'','',1)
         addDir('Filmy wg wersji jezykowej','http://alltube.tv/filmy-online/',7,'','',1)
@@ -91,70 +96,36 @@ def CATEGORIES():
         addDir('Spis seriali','http://alltube.tv/seriale-online/',10,'','',1)
 
         
-def INDEX(url):
-        req = urllib2.Request(url)
-        req.add_header('User-Agent', USER_AGENT)
-        response = urllib2.urlopen(req)
-        link=response.read()
-        response.close()
-        soup = BeautifulSoup(link, 'html.parser')
-        tags = soup.find_all("div", {"class":"col-sm-6"})
-        for tag in tags:
-     
-        #print '============================================================\n'
-        #print tag
-             divTags1 = tag.find_all("div", {"class":"ranking-movie clearfix"})
-             for tag in divTags1:
-                 divTags2 = tag.find_all("div", {"class":"poster"})
-                 divTags3 = tag.find_all("div", {"class":"title"})    #tytul
-                 divTags4 = tag.find_all("div", {"class":"description"}) #opis ale czesciowy
-                 for tag in divTags3:       
-                      tytul = tag.text     
-                 for tag in divTags2:
-                     imglinks = tag.find_all('img')
-                     for imglink in imglinks:
-                        imgfullLink = imglink.get('src').strip()
-                        #print imgfullLink
-                     links = tag.find_all('a')
-                     wersja = ""
-                     for link in links:
-                         fullLink = link.get('href').strip()
-                         if "lektor" in fullLink:
-                              wersja = "[COLOR green]Lektor[/COLOR]"
-                              mode = 4
-                              addDir(tytul.encode('UTF-8')+' '+wersja,fullLink,mode,imgfullLink,'','')
-                         if "napisy" in fullLink:
-                              wersja = "[COLOR orange]Napisy[/COLOR]"
-                              mode =4
-                              addDir(tytul.encode('UTF-8')+' '+wersja,fullLink,mode,imgfullLink,'','')
-                         if "/serial/" in fullLink:
-                              wersja = "[COLOR yellow]Serial[/COLOR]"
-                              mode = 2
-                              addDir(tytul.encode('UTF-8')+' '+wersja,fullLink,mode,imgfullLink,'','1') 
-
 
 def INDEX2(url,page):
+        nr_strony = str(page)
+        page=page+1
         req = urllib2.Request(url)
         req.add_header('User-Agent', USER_AGENT)
         response = urllib2.urlopen(req)
         link=response.read()
         response.close()
         soup = BeautifulSoup(link, 'html.parser')
-        divTag = soup.find_all("ul", {"class":"episode-list"})
+        divTag = soup.find_all("div", {"class":"col-xs-3 col-md-2"})
         for tag in divTag:
              print ''
-             divTags2 = tag.find_all("li", {"class":"episode"})
-             for tag in divTags2:
-                     links = tag.find_all('a')
-                     for link in links:
-                             fullLink = link.get('href').strip()
-                             name = re.compile('odcinek-(.+?)-sezon-',re.I).findall(fullLink)
-                             if '/' in name[0]:
-                                     odcinek,reszta = name[0].split('/',1)
-                             else:
-                                     odcinek = name[0]
-                             match =re.compile('-sezon-(.+?)/',re.I).findall(fullLink) 
-                             addDir('[COLOR  yellow]Sezon '+match[0]+'[/COLOR] [COLOR white]odc. '+odcinek+'[/COLOR]',fullLink,4,'','',str(page))
+             tytul = tag.find("h3")
+             tytul = tytul.text
+             link = tag.find('a')
+             fullLink = link.get('href').strip()
+             imglinks = tag.find_all('img')
+             for imglink in imglinks:
+                  imgfullLink = imglink.get('src').strip()
+             addDir(tytul.encode('UTF-8')+' ',fullLink.encode('UTF-8'),4,imgfullLink,'','')
+        print url + ' '+nr_strony #http://alltube.tv/filmy-online/kategoria[5]+strona[1] 1
+        won = 'strona['+nr_strony+']' 
+        print won + ' won to'  #strona[1]
+        if  won in url:
+             url = url.replace(won,'')
+        else:
+             print ' nie ma tego'
+        #print nexturl + ' dodac ' + 'strona['+str(page)+']+'
+        addDir('Next page -----> str.'+str(page),url+'strona['+str(page)+']+',2,'','',page)  
 
 def INDEX3(url,query):
         headers = {
@@ -169,12 +140,13 @@ def INDEX3(url,query):
         content = requests.post(url, "search="+query, headers=headers)
         #print content.text.encode('utf-8')
         #return content.text
-        match = re.compile('<a href="(.+?)"><img src="(.+?)" alt=""><p><b>(.+?)<').findall(content.text.encode('utf-8'))
-        for url,img,name in match:
+        match = re.compile('<a href="(.+?)">(.+?)</a>').findall(content.text)
+        for url,name in match:
              if "/serial/" in url:
-                  addDir(name,url,2,img,'',1)
+                  print url + ' seriall'
+                  addDir(name.encode('UTF-8')+'[COLOR yellow] - Serial[/COLOR]',url,12,'','',1)
              else:
-                  addDir(name,url,4,img,'',1)
+                  addDir(name.encode('UTF-8'),url,4,'','',1)
 
 def INDEX4(url,page):
         req = urllib2.Request(url)
@@ -199,29 +171,30 @@ def INDEX5(url,page):
         link=response.read()
         response.close()
         soup = BeautifulSoup(link, 'html.parser')
-        tags = soup.find_all("div", {"class":"col-sm-6"})
+        tags = soup.find_all("div", {"class":"col-xs-12 col-md-6"})
         for tag in tags:
                   #print '============================================================\n'
                   #print tag
-                  divTags1 = tag.find_all("div", {"class":"ranking-movie clearfix"})
+                  divTags1 = tag.find_all("div", {"class":"border-box clearfix"})
                   for tag in divTags1:
-                      divTags2 = tag.find_all("div", {"class":"poster"})
-                      divTags3 = tag.find_all("div", {"class":"title"})    #tytul
-                      divTags4 = tag.find_all("div", {"class":"description"}) #opis ale czesciowy
+                      divTags2 = tag.find_all("div", {"class":"col-xs-4 col-md-4 col-lg-3 poster-parent"})
+                      divTags3 = tag.find_all("div", {"class":"col-xs-8 col-md-8 col-lg-9"})    #tytul i opis
+                      links = tag.find_all('a')
+                      wersja = ""
                       for tag in divTags3:       
-                           tytul = tag.text
-                           #print tytul.encode('UTF-8')
+                           tytul = tag.find("h3")
+                           tytul = tytul.text
+                           print tytul.encode('UTF-8')
                       for tag in divTags2:
                           imglinks = tag.find_all('img')
                           for imglink in imglinks:
                              imgfullLink = imglink.get('src').strip()
-                             #print imgfullLink
-                          links = tag.find_all('a')
-                          wersja = ""
-                          for link in links:
-                              fullLink = link.get('href').strip()
-                              print fullLink
-                              addDir(tytul.encode('UTF-8')+' '+wersja,fullLink.encode('UTF-8'),4,imgfullLink,'','')
+                             print imgfullLink
+
+                      for link in links:
+                           fullLink = link.get('href').strip()
+                           print fullLink
+                           addDir(tytul.encode('UTF-8')+' '+wersja,fullLink.encode('UTF-8'),4,imgfullLink,'','')
         #http://alltube.tv/filmy-online/strona[1]+
         #http://alltube.tv/filmy-online/kategoria[1]+strona[1]+
         print url + ' '+nr_strony
@@ -248,8 +221,9 @@ def INDEX6(url,page):
                 match=re.compile('<li data-id="(.+?)">(.+?)</li>').findall(str(ul))
                 for kategoria_id,nazwa_kategorii in match:
                         print kategoria_id+' '+nazwa_kategorii
-                        url = url+'wersja['+kategoria_id+']+strona[1]'
-                        addDir(nazwa_kategorii.encode('UTF-8'),url.encode('UTF-8'),6,'','',str(page))
+                        url_kategoria_id = url+'wersja['+kategoria_id+']+strona[1]'
+                        print "kategoriaa "+url_kategoria_id
+                        addDir(nazwa_kategorii.encode('UTF-8'),url_kategoria_id.encode('UTF-8'),6,'','',str(page))
 
 def INDEX7(url,page):
         req = urllib2.Request(url)
@@ -277,10 +251,10 @@ def INDEX8_SERIALE(url,page):
 
         #print(soup.prettify())
         #print(soup.body)
-        divTag = soup.find_all("div", {"id":"series-list-custome"},{"class":"clearfix"})
+        divTag = soup.find_all("div",{"class":"col-sm-9"})
         #print divTag
         for tag in divTag:
-                 divTags2 = tag.find_all("div", {"class":"poster"})
+                 divTags2 = tag.find_all("div", {"class":"series"})
       
                  for tag in divTags2:
                      imglinks = tag.find_all('img')
@@ -291,10 +265,9 @@ def INDEX8_SERIALE(url,page):
                      wersja = ""
                      for link in links:
                          fullLink = link.get('href').strip()
-                         match = re.compile('/serial/(.+?)/').findall(fullLink)
-                         tytul = match[0].capitalize()
-                         tytul = tytul.replace('-',' ')
-                         addDir(tytul.encode('UTF-8')+' '+wersja,fullLink,2,imgfullLink,'',page)
+                     tytul = tag.find('h3')
+                     tytul = tytul.text
+                     addDir(tytul.encode('UTF-8')+' '+wersja,fullLink,12,imgfullLink,'',page)
         nexturl=url.replace('/'+nr_str,'')
         #http://alltube.tv/seriale-online/1
         addDir('Next page -----> str.'+str(page),nexturl+'/'+str(page),9,'','',page)  
@@ -317,7 +290,30 @@ def INDEX11(url,letter,page):
         response.close()
         match = re.compile('<li data-letter="'+str(letter)+'"><a href="(.+?)">(.+?)</a></li>').findall(link)
         for adres,tytul in match:
-               addDir(tytul,adres.encode('UTF-8'),2,'','',str(page))
+               addDir(tytul,adres.encode('UTF-8'),12,'','',str(page))
+
+def INDEX12(url,page):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        soup = BeautifulSoup(link, 'html.parser')
+        divTag = soup.find_all("ul", {"class":"episode-list"})
+        for tag in divTag:
+             print ''
+             divTags2 = tag.find_all("li", {"class":"episode"})
+             for tag in divTags2:
+                     links = tag.find_all('a')
+                     for link in links:
+                             fullLink = link.get('href').strip()
+                             name = re.compile('odcinek-(.+?)-sezon-',re.I).findall(fullLink)
+                             if '/' in name[0]:
+                                     odcinek,reszta = name[0].split('/',1)
+                             else:
+                                     odcinek = name[0]
+                             match =re.compile('-sezon-(.+?)/',re.I).findall(fullLink) 
+                             addDir('[COLOR  yellow]Sezon '+match[0]+'[/COLOR] [COLOR white]odc. '+odcinek+'[/COLOR]',fullLink,4,'','',str(page))
              
         
 
@@ -332,15 +328,23 @@ def VIDEOLINKS(url,name):
         link=response.read()
         #print link
         response.close()
-        match=re.compile('<td><img src="http:\/\/alltube\.tv\/static\/lang\/(.+?)"> (.+?)<\/td>\n\s+<td class="text-center"><a class="watch-link" data-urlhost="(.+?)"').findall(link)
-        for cos,lang,url in match:
+        match=re.compile('<td class="text-center"><a class="watch" data-urlhost="(.+?)" data-iframe="(.+?)" data-version="(.+?)" data-size="width: (.+?)px; height: (.+?)px;" href="#!">Oglądaj</a></td>').findall(link)
+        for url,cos,lang,width,hight in match:
+                 print url
                  match= re.compile('http:\/\/(.+?)\/').findall(url)
                  for host in match:
                      host = host.replace('embed.','')
                      host = host.replace('www.','')
-                     if "cda" in host:
+                     if "openload" in host:
+                          print "cosco " + host
+                          media_url = url.replace("http://openload.co/video/","https://openload.co/f/")
+                          media_url = urlresolver.resolve(media_url)
+                          print media_url
+                     elif "cda" in host:
                          media_url = CDA(url)
                          media_url = media_url+'|referer=http://static.cda.pl/flowplayer/flash/flowplayer.commercial-3.2.18.swf'
+                     elif "streamin" in host:
+                          media_url = url.replace("video/","")             
                      else:                  
                          media_url = urlresolver.resolve(url)
                  #print media_url
@@ -461,6 +465,10 @@ elif mode==10:
 elif mode==11:
         #print ""+url
         INDEX11(url,letter,page)
+
+elif mode==12:
+        #print ""+url
+        INDEX12(url,page)
 
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
